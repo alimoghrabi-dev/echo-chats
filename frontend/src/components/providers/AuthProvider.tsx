@@ -12,7 +12,7 @@ import axios from "axios";
 const BASE_URL =
   import.meta.env.VITE_NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://echo-chats.onrender.com";
+    : import.meta.env.VITE_BASE_URL;
 
 export let socket: Socket | null = null;
 

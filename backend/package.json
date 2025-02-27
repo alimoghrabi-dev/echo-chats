@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q ./dist/main.js\" ",
-    "build": "npm install",
+    "build": "tsc && npm install",
     "start": "node ./dist/main.js"
   },
   "keywords": [],
