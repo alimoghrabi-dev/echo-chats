@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import logger from "../utils/logger.js";
 import generateJwtToken from "../utils/generateToken.js";
+import envConfig from "../config/env.js";
 
 export class AuthService {
   async registerUserService(req: Request, res: Response) {
@@ -99,9 +100,9 @@ export class AuthService {
 
       res.cookie("Authorization", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: envConfig.NODE_ENV === "production",
+        sameSite: "none",
         maxAge: 15 * 24 * 60 * 60 * 1000,
-        sameSite: "strict",
       });
 
       res.status(200).json("Logged In Successfully!");
@@ -115,8 +116,8 @@ export class AuthService {
     try {
       res.clearCookie("Authorization", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: envConfig.NODE_ENV === "production",
+        sameSite: "none",
       });
 
       res.status(200).json({ message: "Logged Out Successfully!" });

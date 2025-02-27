@@ -30,8 +30,6 @@ export const io = new Server(server, {
         callback(new Error("Blocked by CORS!"));
       }
     },
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   },
 });
@@ -85,10 +83,7 @@ app.use(
         callback(new Error("Blocked by CORS!"));
       }
     },
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    optionsSuccessStatus: 204,
   })
 );
 
