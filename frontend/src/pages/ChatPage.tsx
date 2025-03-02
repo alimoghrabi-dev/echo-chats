@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AlertTriangle, Loader2, RefreshCw, Send } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import ChatMessageDisplayer from "@/components/shared/ChatMessageDisplayer";
@@ -18,13 +24,11 @@ audio.volume = 0.5;
 
 const ChatPage: React.FC = () => {
   const { user, onlineUsers } = useAuth();
-  const { friendId } = useParams();
+  const { chatId } = useParams();
 
   const [message, setMessage] = useState<string | null>(null);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const isFriendOnline = onlineUsers.includes(friendId!);
 
   const {
     data: chat,
@@ -34,9 +38,9 @@ const ChatPage: React.FC = () => {
     refetch,
     isSuccess,
   } = useQuery<IChat>({
-    queryKey: ["CHAT", friendId],
+    queryKey: ["CHAT", chatId],
     queryFn: async () => {
-      const response = await getSelectedChat(friendId);
+      const response = await getSelectedChat(chatId);
 
       if (response) {
         setMessages(response.messages);
@@ -45,11 +49,17 @@ const ChatPage: React.FC = () => {
       return response;
     },
     refetchOnWindowFocus: false,
-    enabled: !!friendId,
+    enabled: !!chatId,
   });
 
-  const friend: IUser | undefined = chat?.participants?.find(
-    (participant: IUser) => participant._id !== user?._id
+  const friend = useMemo(
+    () => chat?.participants?.find((p) => p._id !== user?._id),
+    [chat?.participants, user?._id]
+  );
+
+  const isFriendOnline = useMemo(
+    () => onlineUsers.includes(friend?._id as string),
+    [onlineUsers, friend?._id]
   );
 
   const { mutate: sendMessageMutation, isPending: isSendingMessage } =
@@ -121,16 +131,14 @@ const ChatPage: React.FC = () => {
   }, 100);
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: "smooth",
-      });
-    }
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
   };
 
   const handleNewMessage = useCallback(
     (data: IMessage) => {
-      if (data.senderId._id === friendId) {
+      if (data.senderId._id === friend?._id) {
         setMessages((prev) => [...prev, data]);
         setTimeout(scrollToBottom, 50);
 
@@ -147,7 +155,7 @@ const ChatPage: React.FC = () => {
         }
       }
     },
-    [friendId]
+    [friend?._id]
   );
 
   useEffect(() => {
@@ -168,15 +176,18 @@ const ChatPage: React.FC = () => {
   }, [handleNewMessage]);
 
   useEffect(() => {
-    if (
-      isSuccess &&
-      messages.some(
-        (msg) => !msg.isRead && msg.senderId.toString() !== user?._id
-      )
-    ) {
+    if (!chat || !user || !messages.length) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const isUnread =
+      lastMessage &&
+      lastMessage.senderId._id === friend?._id &&
+      !lastMessage.isRead;
+
+    if (isUnread) {
       markMessagesAsReadMutation();
     }
-  }, [isSuccess, markMessagesAsReadMutation, messages, user?._id]);
+  }, [messages, chat, user, friend?._id, markMessagesAsReadMutation]);
 
   useEffect(() => {
     if (!isPending) {

@@ -4,13 +4,11 @@ import { useAuth } from "@/context/useAuth";
 import { Outlet } from "react-router";
 
 const ChatsLayout: React.FC = () => {
-  const { user, onlineUsers, isRefetching } = useAuth();
+  const { user, onlineUsers } = useAuth();
 
   return (
     <section className="w-full h-full flex gap-x-8">
       <ChatsSidebar
-        isRefetchingFriends={isRefetching}
-        friends={user?.friends}
         friendRequests={user?.friendRequests}
         onlineUsers={onlineUsers}
         isFriendRequestsShown

@@ -25,7 +25,7 @@ const App: React.FC = () => {
         <Route element={<ChatsLayout />}>
           <Route index element={<Home />} />
           <Route
-            path="/chat/:friendId"
+            path="/chat/:chatId"
             element={
               <Suspense fallback={<LoadingPage />}>
                 <ChatPage />

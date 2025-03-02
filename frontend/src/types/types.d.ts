@@ -24,3 +24,18 @@ interface IMessage {
   isRead: boolean;
   createdAt: Date;
 }
+
+interface IOverridedChat {
+  chat: {
+    _id: string;
+    participants: IUser[];
+    messages: IMessage[];
+  };
+  friend: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    profilePic: string;
+  };
+}

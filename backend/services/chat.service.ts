@@ -1,18 +1,46 @@
 import { Request, Response } from "express";
+import { getIfUserIsOnline, io } from "../main.js";
 import logger from "../utils/logger.js";
 import Chat from "../models/chat.schema.js";
 import User from "../models/user.model.js";
-import { getIfUserIsOnline, io } from "../main.js";
 
 export class ChatService {
-  async getChatByFriendAndUserIdsService(req: Request, res: Response) {
+  async getUserChatsService(req: Request, res: Response) {
     try {
-      const { friendId } = req.params;
       const userId = req.userId;
 
-      const chat = await Chat.findOne({
-        participants: { $all: [userId, friendId] },
-      })
+      const chats = await Chat.find({
+        participants: userId,
+      }).lean();
+
+      const chatData = await Promise.all(
+        chats.map(async (chat) => {
+          const otherUserId = chat.participants.find(
+            (pId) => pId.toString() !== userId.toString()
+          );
+
+          const friend = await User.findOne(
+            { _id: otherUserId },
+            "_id firstName lastName profilePic"
+          ).lean();
+
+          return { chat, friend };
+        })
+      );
+
+      res.status(200).json(chatData);
+    } catch (error) {
+      logger.error("❌ Failed to get chats:" + error);
+      res.status(500).json({ error: "Internal Server Error!", path: "Chat" });
+    }
+  }
+
+  async getChatByIdService(req: Request, res: Response) {
+    try {
+      const { chatId } = req.params;
+      const userId = req.userId;
+
+      const chat = await Chat.findById(chatId)
         .populate("participants")
         .populate({
           path: "messages.senderId",
@@ -20,14 +48,6 @@ export class ChatService {
         });
 
       if (!chat) {
-        const usersExist = await User.exists({
-          _id: { $in: [userId, friendId] },
-        });
-        if (!usersExist) {
-          res.status(404).json({ message: "No Users found!" });
-          return;
-        }
-
         res.status(404).json({ message: "No Chat found!" });
         return;
       }
@@ -35,9 +55,7 @@ export class ChatService {
       res.status(200).json(chat);
     } catch (error) {
       logger.error("❌ Failed to get chat:" + error);
-      res
-        .status(500)
-        .json({ error: "Internal Server Error!", path: "Community" });
+      res.status(500).json({ error: "Internal Server Error!", path: "Chat" });
     }
   }
 
@@ -80,7 +98,10 @@ export class ChatService {
         return;
       }
 
-      const newMessage = updatedChat.messages[0];
+      const newMessage = {
+        ...updatedChat.messages[0],
+        chatId: updatedChat._id,
+      };
 
       const receiverId = chat.participants.find(
         (participantId) => participantId.toString() !== userId
@@ -126,33 +147,6 @@ export class ChatService {
       res.status(200).json({ message: "Messages marked as read." });
     } catch (error) {
       console.error("❌ Failed to mark messages as read:", error);
-      res.status(500).json({ error: "Internal Server Error!" });
-    }
-  }
-
-  async getUnreadMessagesService(req: Request, res: Response) {
-    try {
-      const { friendId } = req.params;
-      const userId = req.userId;
-
-      const chat = await Chat.findOne(
-        { participants: { $all: [userId, friendId] } },
-        { messages: 1 }
-      );
-
-      if (!chat) {
-        res.status(404).json({ error: "Chat not found" });
-        return;
-      }
-
-      const unreadCount =
-        chat.messages.filter(
-          (msg) => msg.senderId.toString() !== userId && !msg.isRead
-        ).length || 0;
-
-      res.status(200).json(unreadCount);
-    } catch (error) {
-      console.error("❌ Failed to get unread messages count:", error);
       res.status(500).json({ error: "Internal Server Error!" });
     }
   }

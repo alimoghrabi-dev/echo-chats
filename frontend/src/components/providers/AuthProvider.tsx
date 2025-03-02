@@ -59,7 +59,7 @@ const connectToSocket = (
 
   socket.on("newMessage", (data) => {
     const isInCurrentChat =
-      window.location.pathname === `/chat/${data?.senderId?._id}`;
+      window.location.pathname === `/chat/${data?.chatId}`;
 
     if (data) {
       if (!isInCurrentChat) {

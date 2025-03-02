@@ -1,39 +1,33 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router";
-import { getUnreadMessages } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
 const FriendSideChatDisplayer: React.FC<{
+  chatId: string;
+  messages: IMessage[];
   friendId: string;
   friendFirstName: string;
   friendLastName: string;
-  friendUsername: string;
   onlineUsers: string[];
 }> = ({
+  chatId,
+  messages,
   friendId,
   friendFirstName,
   friendLastName,
-  friendUsername,
   onlineUsers,
 }) => {
   const location = useLocation();
 
-  const isRouteActive = location.pathname === `/chat/${friendId}`;
+  const isRouteActive = location.pathname === `/chat/${chatId}`;
 
   const isFriendOnline = onlineUsers.includes(friendId);
 
-  const { data: unreadMessages } = useQuery({
-    queryKey: ["UNREAD_MESSAGES", friendId],
-    queryFn: async () => await getUnreadMessages(friendId),
-    enabled: !!friendId && !isRouteActive,
-    refetchOnWindowFocus: false,
-    refetchInterval: 10000,
-  });
+  const unreadMessages = 0;
 
   return (
     <Link
-      to={`/chat/${friendId}`}
+      to={`/chat/${chatId}`}
       className={cn(
         "w-full flex items-center justify-between gap-x-2 rounded-xl p-2 hover:bg-primary/5 transition-all",
         {
@@ -51,14 +45,14 @@ const FriendSideChatDisplayer: React.FC<{
             <div className="rounded-full size-4 bg-neutral-400 absolute bottom-0.5 right-0.5 ring-2 ring-neutral-50" />
           )}
         </div>
-        <div className="flex flex-col gap-y-0.5">
+        <div className="flex flex-col gap-y-2.5">
           <p className="capitalize text-neutral-800 font-medium text-base line-clamp-1">{`${friendFirstName} ${friendLastName}`}</p>
-          <p className="text-neutral-700 font-medium text-sm line-clamp-1">
-            {friendUsername}
-          </p>
+          <span className="max-w-[165px] truncate text-xs font-medium text-neutral-500">
+            {messages[messages.length - 1]?.content}fhgaefguiaegfuiaefguaef
+          </span>
         </div>
       </div>
-      {unreadMessages > 0 && location.pathname !== `/chat/${friendId}` ? (
+      {unreadMessages > 0 && location.pathname !== `/chat/${chatId}` ? (
         <span className="flex-shrink-0 relative bg-red-400 font-semibold text-[14px] font-[Poppins] size-6 flex items-center justify-center rounded-full text-neutral-50">
           {unreadMessages >= 9 ? (
             <span className="flex items-start leading-none">

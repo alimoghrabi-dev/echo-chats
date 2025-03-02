@@ -10,14 +10,26 @@ import SearchInputQuery from "../shared/SearchInputQuery";
 import ShowFriendRequests from "../shared/ShowFriendRequests";
 import { useAuth } from "@/context/useAuth";
 import FriendSideChatDisplayer from "../shared/FriendSideChatDisplayer";
+import { getUserChats } from "@/lib/actions";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "../ui/skeleton";
 
 const Navbar: React.FC = () => {
-  const { user, onlineUsers, isRefetching: isRefetchingFriends } = useAuth();
+  const { user, onlineUsers } = useAuth();
 
   const location = useLocation();
 
-  const friends = user?.friends;
   const friendRequests = user?.friendRequests;
+
+  const {
+    data: chats,
+    isPending,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["CHATS"],
+    queryFn: async () => await getUserChats(),
+    refetchOnWindowFocus: false,
+  });
 
   const [open, setOpen] = useState<boolean>(false);
   const [chatsOpen, setChatsOpen] = useState<boolean>(false);
@@ -108,9 +120,22 @@ const Navbar: React.FC = () => {
 
                 <ShowFriendRequests friendRequests={friendRequests} />
               </div>
-              {isRefetchingFriends ? (
-                <div></div>
-              ) : !friends || friends.length === 0 ? (
+              {isPending || isRefetching ? (
+                <div className="w-full flex flex-col gap-y-3 mt-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-full rounded-xl flex items-start gap-x-2 border border-neutral-200/70 p-2"
+                    >
+                      <Skeleton className="size-14 rounded-full" />
+                      <div className="flex flex-col gap-y-2 mt-2">
+                        <Skeleton className="w-24 h-3 rounded-full" />
+                        <Skeleton className="w-16 h-3 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !chats || chats.length === 0 ? (
                 <div className="w-full flex flex-col items-center justify-center gap-y-3 px-2 pt-36">
                   <MessageCircle size={48} className="text-neutral-500" />
                   <p className="text-neutral-700 font-medium text-sm text-center break-words">
@@ -126,13 +151,14 @@ const Navbar: React.FC = () => {
                 </div>
               ) : (
                 <ScrollArea className="w-full max-h-full flex flex-col gap-y-4 mt-4">
-                  {friends.map((friend) => (
+                  {chats.map((chat: IOverridedChat) => (
                     <FriendSideChatDisplayer
-                      key={friend._id}
-                      friendId={friend._id}
-                      friendFirstName={friend.firstName}
-                      friendLastName={friend.lastName}
-                      friendUsername={friend.username}
+                      key={chat.chat._id}
+                      chatId={chat.chat._id}
+                      messages={chat.chat.messages}
+                      friendId={chat.friend._id}
+                      friendFirstName={chat.friend.firstName}
+                      friendLastName={chat.friend.lastName}
                       onlineUsers={onlineUsers}
                     />
                   ))}

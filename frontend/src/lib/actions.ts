@@ -191,16 +191,28 @@ export const acceptOrDenyFriendRequest = async (data: {
   }
 };
 
-export const getSelectedChat = async (friendId: string | undefined) => {
+export const getUserChats = async () => {
+  try {
+    const response = await ServerEndpoint.post("/chat/get-user-chats");
+
+    if (response.status !== 200) {
+      throw new Error(response.data);
+    }
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message || "Something went wrong");
+    } else if (error instanceof Error) {
+      throw new Error("Something went wrong");
+    }
+  }
+};
+
+export const getSelectedChat = async (chatId: string | undefined) => {
   try {
     const response = await ServerEndpoint.post(
-      `/chat/get-one/${friendId}`,
-      {},
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      `/chat/get-chat-by-id/${chatId}`
     );
 
     if (response.status !== 200) {

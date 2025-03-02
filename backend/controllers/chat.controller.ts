@@ -3,11 +3,12 @@ import { ChatService } from "../services/chat.service.js";
 
 const chatService = new ChatService();
 
-export const getChatByFriendAndUserIds = async (
-  req: Request,
-  res: Response
-) => {
-  return await chatService.getChatByFriendAndUserIdsService(req, res);
+export const getUserChats = async (req: Request, res: Response) => {
+  return await chatService.getUserChatsService(req, res);
+};
+
+export const getChatById = async (req: Request, res: Response) => {
+  return await chatService.getChatByIdService(req, res);
 };
 
 export const sendMessageToChat = async (req: Request, res: Response) => {
@@ -16,8 +17,4 @@ export const sendMessageToChat = async (req: Request, res: Response) => {
 
 export const markMessageAsRead = async (req: Request, res: Response) => {
   return await chatService.markMessageAsReadService(req, res);
-};
-
-export const getUnreadMessages = async (req: Request, res: Response) => {
-  return await chatService.getUnreadMessagesService(req, res);
 };
