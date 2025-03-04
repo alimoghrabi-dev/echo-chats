@@ -4,6 +4,7 @@ interface IUser {
   lastName: string;
   username: string;
   email: string;
+  profilePicture: string | null;
   friends: IUser[];
   description: string;
   friendRequests: IUser[];
@@ -12,16 +13,17 @@ interface IUser {
 interface IChat {
   _id: string;
   participants: IUser[];
-  messages: IMessage[];
+  lastMessage: IMessage;
+  unreadCounts: Record<string, number>;
 }
 
 interface IMessage {
   _id: string;
-  chatId: string;
+  chatId: IChat;
   senderId: IUser;
   content: string;
+  image: string;
   isPending?: boolean;
-  isRead: boolean;
   createdAt: Date;
 }
 
@@ -29,13 +31,14 @@ interface IOverridedChat {
   chat: {
     _id: string;
     participants: IUser[];
-    messages: IMessage[];
+    lastMessage: IMessage;
+    unreadCounts: Record<string, number>;
   };
   friend: {
     _id: string;
     firstName: string;
     lastName: string;
     username: string;
-    profilePic: string;
+    profilePicture: string;
   };
 }

@@ -9,6 +9,7 @@ import { logoutUser } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { toast } from "react-toastify";
 import { Loader2 } from "lucide-react";
+import Image from "../shared/Image";
 
 const Sidebar: React.FC = () => {
   const { user } = useAuth();
@@ -34,14 +35,26 @@ const Sidebar: React.FC = () => {
 
   return (
     <nav className="w-36 fixed h-screen left-0 hidden lg:flex flex-col items-center justify-between gap-y-8 py-8">
-      <div className="size-20 bg-neutral-100 rounded-full ring-1 ring-neutral-100">
-        <Link
-          to="/"
-          className="w-full h-full ring-1 ring-neutral-100 flex items-center justify-center bg-gradient-to-br from-primary/80 to-primary font-semibold text-2xl uppercase text-neutral-50 rounded-full"
-        >
-          {`${user?.firstName?.charAt(0)}${user?.lastName?.charAt(0)}`}
-        </Link>
-      </div>
+      <Link
+        to="/"
+        className={cn(
+          "relative size-20 bg-neutral-100 rounded-full ring-2 ring-neutral-300/80"
+        )}
+      >
+        {user?.profilePicture ? (
+          <Image
+            src={user?.profilePicture}
+            alt={`${user?.firstName}'s profile`}
+            className="w-full h-full object-cover rounded-full"
+            loadingClassName="w-full h-full rounded-full backdrop-blur-lg"
+            loaderColor="text-neutral-800/60 size-6"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/80 to-primary font-semibold text-2xl uppercase text-neutral-50 rounded-full">
+            {`${user?.firstName?.charAt(0)}${user?.lastName?.charAt(0)}`}
+          </div>
+        )}
+      </Link>
       <ScrollArea className="w-full max-h-[55vh] p-4">
         <div className="w-full flex flex-col gap-y-2">
           {sideLinks.map((link, index) => {

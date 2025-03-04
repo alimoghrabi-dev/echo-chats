@@ -112,12 +112,11 @@ const Navbar: React.FC = () => {
           <SheetContent
             aria-describedby={undefined}
             side="left"
-            className="outline-none border-none pt-12"
+            className="outline-none border-none pt-12 px-3"
           >
             <div className="w-full h-full">
               <div className="w-full flex items-center gap-x-1.5">
                 <SearchInputQuery />
-
                 <ShowFriendRequests friendRequests={friendRequests} />
               </div>
               {isPending || isRefetching ? (
@@ -155,10 +154,14 @@ const Navbar: React.FC = () => {
                     <FriendSideChatDisplayer
                       key={chat.chat._id}
                       chatId={chat.chat._id}
-                      messages={chat.chat.messages}
+                      lastMessage={chat.chat.lastMessage}
+                      friendProfilePicture={chat.friend.profilePicture}
                       friendId={chat.friend._id}
                       friendFirstName={chat.friend.firstName}
                       friendLastName={chat.friend.lastName}
+                      unreadMessages={
+                        chat.chat?.unreadCounts?.[user?._id as string] || 0
+                      }
                       onlineUsers={onlineUsers}
                     />
                   ))}

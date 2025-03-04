@@ -49,6 +49,8 @@ const LoginPage: React.FC = () => {
       form.reset();
     },
     onError: (error) => {
+      form.setValue("password", "");
+      setIsPasswordVisible(false);
       toast.error(error.message || "Something went wrong, please try again.");
     },
   });

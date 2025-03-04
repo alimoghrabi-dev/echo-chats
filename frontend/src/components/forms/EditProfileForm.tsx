@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { Loader2 } from "lucide-react";
 import { updateUserProfile } from "@/lib/actions";
+import ProfilePictureChanger from "../shared/ProfilePictureChanger";
 import { z } from "zod";
 
 const EditProfileForm: React.FC<{
@@ -24,14 +25,24 @@ const EditProfileForm: React.FC<{
   firstName: string;
   lastName: string;
   username: string;
+  profilePicture: string | null;
   description: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ profileId, firstName, lastName, username, description, setOpen }) => {
+}> = ({
+  profileId,
+  firstName,
+  lastName,
+  username,
+  profilePicture,
+  description,
+  setOpen,
+}) => {
   const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof editUserProfileValidationSchema>>({
     resolver: zodResolver(editUserProfileValidationSchema),
     defaultValues: {
+      profilePicture: undefined,
       firstName: "",
       lastName: "",
       username: "",
@@ -46,7 +57,7 @@ const EditProfileForm: React.FC<{
       await updateUserProfile(profileId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["USER"] });
+      queryClient.invalidateQueries({ queryKey: ["USER", profileId] });
       queryClient.invalidateQueries({
         queryKey: ["AUTH_STATUS"],
       });
@@ -60,13 +71,13 @@ const EditProfileForm: React.FC<{
       setOpen(false);
     },
   });
-
   useEffect(() => {
+    form.setValue("profilePicture", profilePicture || undefined);
     form.setValue("firstName", firstName || "");
     form.setValue("lastName", lastName || "");
     form.setValue("username", username || "");
     form.setValue("description", description || "");
-  }, [firstName, lastName, username, description, form]);
+  }, [firstName, lastName, username, description, form, profilePicture]);
 
   return (
     <Form {...form}>
@@ -75,6 +86,22 @@ const EditProfileForm: React.FC<{
         className="w-full space-y-3"
         noValidate
       >
+        <FormField
+          name="profilePicture"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <ProfilePictureChanger
+                  field={field}
+                  firstName={firstName}
+                  lastName={lastName}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="w-full grid grid-cols-2 gap-2">
           <FormField
             name="firstName"

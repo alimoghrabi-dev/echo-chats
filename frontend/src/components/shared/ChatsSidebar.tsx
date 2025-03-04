@@ -10,18 +10,21 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserChats } from "@/lib/actions";
 
 const ChatsSidebar: React.FC<{
+  userId: string | undefined;
   friendRequests: IUser[] | [] | undefined;
   onlineUsers: string[];
   isFriendRequestsShown?: boolean;
-}> = ({ friendRequests, onlineUsers, isFriendRequestsShown = false }) => {
-  const {
-    data: chats,
-    isPending,
-    isRefetching,
-  } = useQuery({
+}> = ({
+  userId,
+  friendRequests,
+  onlineUsers,
+  isFriendRequestsShown = false,
+}) => {
+  const { data: chats, isPending } = useQuery({
     queryKey: ["CHATS"],
     queryFn: async () => await getUserChats(),
     refetchOnWindowFocus: false,
+    refetchInterval: 30000,
   });
 
   return (
@@ -32,7 +35,7 @@ const ChatsSidebar: React.FC<{
           <ShowFriendRequests friendRequests={friendRequests} />
         )}
       </div>
-      {isPending || isRefetching ? (
+      {isPending ? (
         <div className="w-full flex flex-col gap-y-3 mt-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
@@ -67,10 +70,14 @@ const ChatsSidebar: React.FC<{
               <FriendSideChatDisplayer
                 key={chat.chat._id}
                 chatId={chat.chat._id}
-                messages={chat.chat.messages}
+                lastMessage={chat.chat.lastMessage}
+                friendProfilePicture={chat.friend.profilePicture}
                 friendId={chat.friend._id}
                 friendFirstName={chat.friend.firstName}
                 friendLastName={chat.friend.lastName}
+                unreadMessages={
+                  chat.chat?.unreadCounts?.[userId as string] || 0
+                }
                 onlineUsers={onlineUsers}
               />
             ))}

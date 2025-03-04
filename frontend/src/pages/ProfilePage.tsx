@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import EditProfileForm from "@/components/forms/EditProfileForm";
 import { toast } from "react-toastify";
+import Image from "@/components/shared/Image";
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
@@ -122,9 +123,24 @@ const ProfilePage: React.FC = () => {
         />
         <div className="lg:absolute lg:px-8 inset-x-0 -bottom-32 w-full lg:h-48 z-20 flex items-start lg:items-center justify-between gap-x-8 mt-5 lg:mt-0">
           <div className="flex items-start lg:items-end gap-x-4">
-            <div className="size-32 lg:size-44 rounded-[44px] ring-[6px] ring-neutral-50/50 bg-foreground flex items-center justify-center text-neutral-50 uppercase text-4xl lg:text-5xl font-semibold">
-              {profile?.firstName.charAt(0)}
-              {profile?.lastName.charAt(0)}
+            <div
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative size-32 lg:size-44 rounded-[44px] ring-[6px] ring-neutral-50/50"
+            >
+              {profile?.profilePicture ? (
+                <Image
+                  src={profile?.profilePicture}
+                  alt={`${profile?.firstName}'s profile`}
+                  className="w-full h-full object-cover rounded-[44px]"
+                  loadingClassName="w-full h-full rounded-[44px] border border-neutral-300 bg-neutral-200/50 backdrop-blur-lg"
+                  loaderColor="text-neutral-800/60 size-9"
+                />
+              ) : (
+                <div className="size-32 lg:size-44 rounded-[44px] bg-foreground flex items-center justify-center text-neutral-50 uppercase text-4xl lg:text-5xl font-semibold">
+                  {profile?.firstName.charAt(0)}
+                  {profile?.lastName.charAt(0)}
+                </div>
+              )}
             </div>
             <div className="flex flex-col h-32 lg:h-44 justify-between lg:justify-end py-2">
               <div className="flex flex-col">
@@ -172,6 +188,7 @@ const ProfilePage: React.FC = () => {
                       firstName={profile.firstName}
                       lastName={profile.lastName}
                       username={profile.username}
+                      profilePicture={profile.profilePicture}
                       description={profile.description}
                       setOpen={setOpen}
                     />
@@ -225,6 +242,7 @@ const ProfilePage: React.FC = () => {
                   firstName={profile.firstName}
                   lastName={profile.lastName}
                   username={profile.username}
+                  profilePicture={profile.profilePicture}
                   description={profile.description}
                   setOpen={setOpen}
                 />

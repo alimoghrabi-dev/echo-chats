@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+
 export const registerUserValidationSchema = z
   .object({
     firstName: z.string().trim().min(1, { message: "First Name is required" }),
@@ -63,13 +65,29 @@ export const loginUserValidationSchema = z.object({
 });
 
 export const editUserProfileValidationSchema = z.object({
+  profilePicture: z
+    .union([
+      z.string(),
+      z.preprocess(
+        (file) => (file instanceof File ? file : null),
+        z
+          .instanceof(File)
+          .refine((file) => file.size <= 6 * 1024 * 1024, {
+            message: "File size must not exceed 6MB",
+          })
+          .refine((file) => allowedMimeTypes.includes(file.type), {
+            message: "Only JPEG, PNG, and GIF formats are allowed",
+          })
+      ),
+    ])
+    .optional(),
   firstName: z.string().trim().min(1, { message: "First Name is required" }),
   lastName: z.string().trim().min(1, { message: "Last Name is required" }),
   username: z.string().trim().min(1, { message: "Username is required" }),
   description: z
     .string()
     .trim()
-    .max(150, { message: "Description should be max 150 characters" })
+    .max(150, { message: "Description should be max 150 c3haracters" })
     .refine((value) => !value || value.length >= 5, {
       message: "Description should be at least 5 characters",
     })

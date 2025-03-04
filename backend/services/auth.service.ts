@@ -101,7 +101,7 @@ export class AuthService {
       res.cookie("Authorization", token, {
         httpOnly: true,
         secure: envConfig.NODE_ENV === "production",
-        sameSite: "none",
+        sameSite: envConfig.NODE_ENV === "production" ? "none" : "strict",
         maxAge: 15 * 24 * 60 * 60 * 1000,
       });
 
@@ -112,12 +112,12 @@ export class AuthService {
     }
   }
 
-  async logoutUserService(req: Request, res: Response) {
+  async logoutUserService(_req: Request, res: Response) {
     try {
       res.clearCookie("Authorization", {
         httpOnly: true,
         secure: envConfig.NODE_ENV === "production",
-        sameSite: "none",
+        sameSite: envConfig.NODE_ENV === "production" ? "none" : "strict",
       });
 
       res.status(200).json({ message: "Logged Out Successfully!" });

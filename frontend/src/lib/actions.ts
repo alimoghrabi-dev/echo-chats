@@ -209,23 +209,33 @@ export const getUserChats = async () => {
   }
 };
 
-export const getSelectedChat = async (chatId: string | undefined) => {
+export const getSelectedChat = async (
+  chatId: string | undefined,
+  signal?: AbortSignal
+) => {
   try {
     const response = await ServerEndpoint.post(
-      `/chat/get-chat-by-id/${chatId}`
+      `/chat/get-chat-by-id/${chatId}`,
+      {},
+      { signal }
     );
 
     if (response.status !== 200) {
       throw new Error(response.data);
     }
 
-    return response.data;
+    return {
+      chat: response.data.chat,
+      messages: response.data.chatMessages || [],
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data.message || "Something went wrong");
     } else if (error instanceof Error) {
       throw new Error("Something went wrong");
     }
+
+    throw error;
   }
 };
 
@@ -241,7 +251,7 @@ export const markChatMessagesAsRead = async (chatId: string | undefined) => {
       }
     );
 
-    if (response.status !== 200) {
+    if (response.status !== 201) {
       throw new Error(response.data || "Something went wrong");
     }
   } catch (error) {
@@ -298,15 +308,28 @@ export const updateUserProfile = async (
   data: z.infer<typeof editUserProfileValidationSchema>
 ) => {
   try {
-    const { firstName, lastName, username, description } = data;
+    const { profilePicture, firstName, lastName, username, description } = data;
 
-    const response = await ServerEndpoint.patch("/user/edit-user", {
-      profileId,
-      firstName,
-      lastName,
-      username,
-      description,
-    });
+    const formData = new FormData();
+
+    if (profilePicture && typeof profilePicture !== "string") {
+      formData.append("profilePicture", profilePicture);
+    }
+
+    if (firstName) formData.append("firstName", firstName);
+    if (lastName) formData.append("lastName", lastName);
+    if (username) formData.append("username", username);
+    if (description) formData.append("description", description);
+
+    const response = await ServerEndpoint.patch(
+      `/user/edit-user/${profileId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     if (response.status !== 201) {
       throw new Error(response.data || "Something went wrong");

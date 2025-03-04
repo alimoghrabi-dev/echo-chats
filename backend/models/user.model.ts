@@ -7,6 +7,7 @@ interface IUser extends Document {
   email: string;
   password: string;
   description: string;
+  profilePicture: string;
   friends: Schema.Types.ObjectId[];
   friendRequests: Schema.Types.ObjectId[];
 }
@@ -45,6 +46,9 @@ const userSchema: Schema<IUser> = new Schema(
       type: String,
       required: true,
       minlength: 8,
+    },
+    profilePicture: {
+      type: String,
     },
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
     friendRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],

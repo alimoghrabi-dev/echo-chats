@@ -64,7 +64,7 @@ const connectToSocket = (
     if (data) {
       if (!isInCurrentChat) {
         toast.info(
-          `New Message From ${data.senderId?.firstName} ${data.senderId?.lastName}`
+          `New Message From ${data?.senderId?.firstName} ${data?.senderId?.lastName}`
         );
       }
     }

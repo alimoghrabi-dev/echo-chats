@@ -1,18 +1,9 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface IMessage {
-  _id: Schema.Types.ObjectId;
-  senderId: Schema.Types.ObjectId;
-  content: string;
-  isPending?: boolean;
-  isRead: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 interface IChat extends Document {
   participants: Schema.Types.ObjectId[];
-  messages: IMessage[];
+  lastMessage: Schema.Types.ObjectId;
+  unreadCounts: Map<string, number>;
 }
 
 const chatSchema = new Schema(
@@ -20,17 +11,8 @@ const chatSchema = new Schema(
     participants: [
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
-    messages: [
-      {
-        _id: { type: Schema.Types.ObjectId, auto: true },
-        senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        content: { type: String, required: true },
-        isPending: { type: Boolean },
-        isRead: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now },
-      },
-    ],
+    lastMessage: { type: Schema.Types.ObjectId, ref: "Message" },
+    unreadCounts: { type: Map, of: Number, default: {} },
   },
   { timestamps: true }
 );

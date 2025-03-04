@@ -10,6 +10,10 @@ interface EnvConfig {
   ARCJET_KEY: string;
   ARCJET_ENV: string;
   BASE_URL: string;
+  S3_BUCKET_REGION: string;
+  S3_ACCESS_KEY: string;
+  S3_SECRET_ACCESS_KEY: string;
+  S3_BUCKET_NAME: string;
 }
 
 const envConfig: EnvConfig = {
@@ -21,6 +25,10 @@ const envConfig: EnvConfig = {
   ARCJET_KEY: process.env.ARCJET_KEY!,
   ARCJET_ENV: process.env.ARCJET_ENV!,
   BASE_URL: process.env.BASE_URL!,
+  S3_BUCKET_REGION: process.env.S3_BUCKET_REGION!,
+  S3_ACCESS_KEY: process.env.S3_ACCESS_KEY!,
+  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY!,
+  S3_BUCKET_NAME: process.env.S3_BUCKET_NAME!,
 };
 
 export default envConfig;

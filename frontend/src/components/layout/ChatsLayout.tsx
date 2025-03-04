@@ -9,6 +9,7 @@ const ChatsLayout: React.FC = () => {
   return (
     <section className="w-full h-full flex gap-x-8">
       <ChatsSidebar
+        userId={user?._id}
         friendRequests={user?.friendRequests}
         onlineUsers={onlineUsers}
         isFriendRequestsShown

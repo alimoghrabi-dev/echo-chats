@@ -14,6 +14,8 @@ import TokenGuard from "./middlewares/tokenGuard.middleware.js";
 import communityRouter from "./routes/community.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import userRouter from "./routes/user.routes.js";
+import { asciiLogo, listRoutes } from "./utils/lists.js";
+import chalk from "chalk";
 
 const app: Express = express();
 const server = createServer(app);
@@ -94,7 +96,14 @@ const startServer = async () => {
     await ConnectToDatabase();
 
     server.listen(PORT, () => {
-      logger.success(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(chalk.cyan(asciiLogo));
+
+      console.log(chalk.magentaBright.bold("🚀 Server is running!"));
+      console.log(chalk.white("──────────────────────────────────"));
+      console.log(chalk.blueBright(`📍 PORT: ${PORT}`));
+      console.log(chalk.yellow(`🌍 ENV: ${envConfig.NODE_ENV}`));
+      console.log(chalk.white("──────────────────────────────────"));
+      listRoutes(app);
     });
   } catch (error) {
     logger.error("❌ Failed to connect to the database:");
@@ -112,18 +121,16 @@ export const getIfUserIsOnline = (userId: string) => {
 
 io.on("connection", (socket) => {
   console.log("-----------------------");
-  logger.info(`⚡ New client connected: ${socket.id}`);
 
   const userId = socket.handshake.auth.userId;
   if (!userId) {
-    console.log("❌ No userId provided, disconnecting socket.");
     socket.disconnect();
     return;
   }
 
   onlineUsers.set(userId, socket.id);
   socket.join(String(userId));
-  logger.info(`👤 User ${userId} is online.`);
+  logger.info(`⚡ New client connected: ${socket.id}`);
 
   io.emit("onlineUsers", Array.from(onlineUsers.keys()));
 

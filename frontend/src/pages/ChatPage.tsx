@@ -5,10 +5,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { AlertTriangle, Loader2, RefreshCw, Send } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ChatMessageDisplayer from "@/components/shared/ChatMessageDisplayer";
-import { cn, sanitizeInput } from "@/lib/utils";
 import { getSelectedChat, markChatMessagesAsRead } from "@/lib/actions";
 import { ServerEndpoint } from "@/lib/serverEndpoint";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,6 +17,8 @@ import { useAuth } from "@/context/useAuth";
 import { socket } from "@/components/providers/AuthProvider";
 import { toast } from "react-toastify";
 import { NotificationSound } from "@/assets/assets";
+import ChatInput from "@/components/chat/ChatInput";
+import { cn } from "@/lib/utils";
 
 const audio = new Audio(NotificationSound);
 audio.volume = 0.5;
@@ -26,9 +27,16 @@ const ChatPage: React.FC = () => {
   const { user, onlineUsers } = useAuth();
   const { chatId } = useParams();
 
-  const [message, setMessage] = useState<string | null>(null);
-  const [messages, setMessages] = useState<IMessage[]>([]);
+  const queryClient = useQueryClient();
+
+  const chatIdRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const [messages, setMessages] = useState<IMessage[]>([]);
+
+  const [message, setMessage] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   const {
     data: chat,
@@ -40,13 +48,20 @@ const ChatPage: React.FC = () => {
   } = useQuery<IChat>({
     queryKey: ["CHAT", chatId],
     queryFn: async () => {
-      const response = await getSelectedChat(chatId);
+      if (chatIdRef.current) {
+        chatIdRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      chatIdRef.current = controller;
+
+      const response = await getSelectedChat(chatId, controller.signal);
 
       if (response) {
         setMessages(response.messages);
       }
 
-      return response;
+      return response.chat;
     },
     refetchOnWindowFocus: false,
     enabled: !!chatId,
@@ -67,10 +82,24 @@ const ChatPage: React.FC = () => {
       mutationFn: async (newMessage: string) => {
         if (!chat || !user) return;
 
+        if (!message && !file) {
+          toast.error("Please enter a message");
+          return;
+        }
+
+        const formData = new FormData();
+
+        if (message) formData.append("message", newMessage);
+        if (file) formData.append("file", file);
+
         const response = await ServerEndpoint.post(
           `/chat/send-message/${chat._id}`,
-          { message: newMessage },
-          { headers: { "Content-Type": "application/json" } }
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
 
         if (response.status !== 201) {
@@ -81,11 +110,18 @@ const ChatPage: React.FC = () => {
       },
       onMutate: (newMessage) => {
         setMessage("");
+        setFile(null);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
 
         const tempMessage = {
           _id: `temp-${Date.now()}`,
+          chatId: chatId,
           senderId: user as IUser,
-          content: newMessage,
+          content: newMessage || "",
+          image: file ? URL.createObjectURL(file) : "",
           isPending: true,
           createdAt: new Date(),
         };
@@ -120,15 +156,20 @@ const ChatPage: React.FC = () => {
     mutationFn: async () => {
       await markChatMessagesAsRead(chat?._id);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["CHATS"],
+      });
+    },
     onError: () => {
       toast.error("Failed to mark messages as read!");
     },
   });
 
   const sendMessage = debounce((msg) => {
-    if (!msg?.trim()) return;
+    if (!msg?.trim() && !file) return;
     sendMessageMutation(msg);
-  }, 100);
+  }, 75);
 
   const scrollToBottom = () => {
     requestAnimationFrame(() => {
@@ -178,22 +219,32 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (!chat || !user || !messages.length) return;
 
-    const lastMessage = messages[messages.length - 1];
     const isUnread =
-      lastMessage &&
-      lastMessage.senderId._id === friend?._id &&
-      !lastMessage.isRead;
+      user._id in chat.unreadCounts
+        ? chat?.unreadCounts?.[user._id as string] > 0
+          ? true
+          : false
+        : false;
 
     if (isUnread) {
+      console.log("marked");
       markMessagesAsReadMutation();
     }
-  }, [messages, chat, user, friend?._id, markMessagesAsReadMutation]);
+  }, [chat, markMessagesAsReadMutation, messages.length, user]);
 
   useEffect(() => {
     if (!isPending) {
       document.title = `Chat with ${friend?.firstName} ${friend?.lastName}`;
     }
   }, [friend?.firstName, friend?.lastName, isPending]);
+
+  useEffect(() => {
+    return () => {
+      if (chatIdRef.current) {
+        chatIdRef.current.abort();
+      }
+    };
+  }, []);
 
   if (isPending || isRefetching) {
     return (
@@ -267,9 +318,10 @@ const ChatPage: React.FC = () => {
             <div className="w-full flex flex-col gap-y-4 mt-4 px-2">
               {messages?.map((message: IMessage, index: number) => {
                 const nextMessage = messages[index + 1];
+
                 const isLastInGroup =
                   !nextMessage ||
-                  nextMessage.senderId._id !== message.senderId._id;
+                  nextMessage.senderId?._id !== message.senderId._id;
 
                 return (
                   <ChatMessageDisplayer
@@ -285,35 +337,15 @@ const ChatPage: React.FC = () => {
           )}
           <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black/10 rounded-b-lg to-transparent pointer-events-none z-20" />
         </ScrollArea>
-        <div className="sticky bottom-0 inset-x-0 w-full flex items-center gap-x-2 bg-primary/15 rounded-md h-12 px-4 hover:bg-primary/20 transition-all">
-          <input
-            type="text"
-            value={sanitizeInput(message || "")}
-            onChange={(e) => setMessage(sanitizeInput(e.target.value))}
-            onKeyDown={(e) => {
-              if (isSendingMessage) return;
-
-              if (e.key === "Enter") {
-                sendMessage(message);
-              }
-            }}
-            autoComplete="off"
-            placeholder="Your message"
-            className="w-full h-full outline-none bg-transparent text-neutral-800 placeholder:text-neutral-700 font-normal"
-          />
-          <button
-            type="button"
-            disabled={!message || isSendingMessage}
-            onClick={() => sendMessage(message)}
-            className="text-neutral-700 hover:opacity-80 transition-all disabled:opacity-40"
-          >
-            {isSendingMessage ? (
-              <Loader2 size={20} className="animate-spin" />
-            ) : (
-              <Send size={23} />
-            )}
-          </button>
-        </div>
+        <ChatInput
+          message={message}
+          setMessage={setMessage}
+          file={file}
+          setFile={setFile}
+          sendMessage={sendMessage}
+          isSendingMessage={isSendingMessage}
+          fileInputRef={fileInputRef}
+        />
       </div>
     </section>
   );

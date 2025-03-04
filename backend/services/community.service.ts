@@ -11,7 +11,7 @@ export class CommunityService {
       const { query } = req.query;
       const userId = req.userId;
 
-      let users;
+      let users = [];
 
       if (query) {
         users = await User.find({

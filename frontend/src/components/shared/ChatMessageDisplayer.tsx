@@ -1,6 +1,7 @@
 import React from "react";
 import { cn, formatTimeWithPeriod } from "@/lib/utils";
 import { CheckCheck, Clock } from "lucide-react";
+import Image from "./Image";
 
 const ChatMessageDisplayer: React.FC<{
   message: IMessage;
@@ -29,7 +30,28 @@ const ChatMessageDisplayer: React.FC<{
           }
         )}
       >
-        <span className="max-w-full break-words">{message.content}</span>
+        <div className="flex flex-col gap-y-2">
+          {message.content && (
+            <span className="max-w-full break-words">{message.content}</span>
+          )}
+          {message.image && (
+            <div
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative select-none w-[250px] h-[300px] md:w-[300px] md:h-[350px] xl:w-[350px] xl:h-[400px] bg-neutral-300 rounded-xl bg-transparent"
+            >
+              <Image
+                src={message.image}
+                alt="image"
+                className="w-full h-full object-contain rounded-xl"
+                loadingClassName="bg-transparent"
+                loaderColor={
+                  isSenderMessage ? "text-neutral-800" : "text-neutral-100"
+                }
+                contain
+              />
+            </div>
+          )}
+        </div>
         <div
           className={cn("flex items-center gap-x-2", {
             "flex-row-reverse": isSenderMessage,
@@ -56,19 +78,39 @@ const ChatMessageDisplayer: React.FC<{
         </div>
       </div>
       {isLastInGroup && (
-        <div
-          className={cn(
-            "size-9 rounded-full flex items-center justify-center font-semibold text-sm uppercase",
-            {
-              "bg-gradient-to-br from-primary/60 to-primary/90 text-neutral-50":
-                !isSenderMessage,
-              "bg-gray-300 text-neutral-700": isSenderMessage,
-            }
+        <div className="size-9 relative rounded-full">
+          {message.senderId.profilePicture ? (
+            <Image
+              src={message.senderId.profilePicture}
+              alt={`${message.senderId.firstName}'s profile`}
+              className="w-full h-full object-cover rounded-full"
+              loadingClassName={cn(
+                "w-full h-full rounded-full shadow backdrop-blur-lg",
+                {
+                  "bg-gradient-to-br from-primary/40 to-primary/75":
+                    !isSenderMessage,
+                }
+              )}
+              loaderColor={cn("text-neutral-800/60 size-5", {
+                "text-neutral-200": !isSenderMessage,
+              })}
+            />
+          ) : (
+            <div
+              className={cn(
+                "w-full h-full rounded-full flex items-center justify-center font-semibold text-sm uppercase",
+                {
+                  "bg-gradient-to-br from-primary/60 to-primary/90 text-neutral-50":
+                    !isSenderMessage,
+                  "bg-gray-300 text-neutral-700": isSenderMessage,
+                }
+              )}
+            >
+              {`${message.senderId.firstName?.charAt(
+                0
+              )}${message.senderId.lastName?.charAt(0)}`}
+            </div>
           )}
-        >
-          {`${message.senderId.firstName?.charAt(
-            0
-          )}${message.senderId.lastName?.charAt(0)}`}
         </div>
       )}
     </div>
