@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import React from "react";
 
 const LoadingPage: React.FC = () => {
@@ -12,7 +13,10 @@ const LoadingPage: React.FC = () => {
         Connecting to your chats...
       </p>
       <div className="absolute bottom-10 text-center text-neutral-500 text-xs font-normal">
-        <p>Powered by Ali Moghrabi</p>
+        <p className="flex items-center justify-center gap-x-1.5">
+          Powered by Ali Moghrabi{" "}
+          <Heart size={14} className="text-red-500 fill-red-500" />
+        </p>
       </div>
     </div>
   );
